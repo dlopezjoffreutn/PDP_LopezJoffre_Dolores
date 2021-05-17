@@ -82,7 +82,6 @@ esOferente :: Jugador -> Bool
 esOferente unJugador = tacticaDeJuego unJugador == OferenteSingular
 
 
-
 --funciones
 pasarPorElBanco :: Accion
 pasarPorElBanco = (ganarDinero 40) . (asignarTactica CompradorCompulsivo)
@@ -121,7 +120,6 @@ puedePagarPropiedad unaPropiedad unJugador  = dinero unJugador >= precio unaProp
 
 pagarPropiedad :: Propiedad -> Accion
 pagarPropiedad unaPropiedad = (perderDinero (precio unaPropiedad)) . (comprarPropiedad unaPropiedad)
-
 
 
 --cobrarAlquileres
