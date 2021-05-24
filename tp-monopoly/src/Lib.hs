@@ -1,10 +1,4 @@
-module Lib
-    ( someFunc
-    ) where
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
-
+module Lib where
 
 --data & types
 type Accion = Jugador -> Jugador
@@ -46,62 +40,62 @@ manuelJugador = jugadorInicial (Jugador { nombre = "Manuel", tacticaDeJuego = Of
 
 
 --helpers
-cambiarDinero :: (Int -> Int) -> Accion
-cambiarDinero funcionDinero unJugador = unJugador { dinero = funcionDinero.dinero $ unJugador }
+mapDinero :: (Int -> Int) -> Accion
+mapDinero modifierDinero unJugador = unJugador { dinero = modifierDinero.dinero $ unJugador }
 
-cambiarAccion :: ([Accion] -> [Accion]) -> Accion
-cambiarAccion funcionAccion unJugador = unJugador { acciones = funcionAccion.acciones $ unJugador }
+mapAcciones :: ([Accion] -> [Accion]) -> Accion
+mapAcciones modifierAccion unJugador = unJugador { acciones = modifierAccion.acciones $ unJugador }
 
-cambiarPropiedad :: ([Propiedad] -> [Propiedad]) -> Accion
-cambiarPropiedad funcionPropiedad unJugador = unJugador { propiedades = funcionPropiedad.propiedades $ unJugador }
+mapPropiedades :: ([Propiedad] -> [Propiedad]) -> Accion
+mapPropiedades modifierPropiedad unJugador = unJugador { propiedades = modifierPropiedad.propiedades $ unJugador }
 
 asignarTactica :: Tacticas -> Accion
 asignarTactica tactica unJugador = unJugador { tacticaDeJuego = tactica }
 
 
 perderDinero :: Int -> Accion
-perderDinero dinero = cambiarDinero (subtract dinero)
+perderDinero dinero = mapDinero (subtract dinero)
 
 ganarDinero :: Int -> Accion
-ganarDinero dinero = cambiarDinero (+ dinero)
+ganarDinero dinero = mapDinero (+ dinero)
 
 sumarAccion :: Accion -> Accion
-sumarAccion unaAccion = cambiarAccion (++[unaAccion])
+sumarAccion unaAccion = mapAcciones (++[unaAccion])
 
 comprarPropiedad :: Propiedad -> Accion
-comprarPropiedad unaPropiedad = cambiarPropiedad (++[unaPropiedad])
+comprarPropiedad unaPropiedad = mapPropiedades (++[unaPropiedad])
 
 
 esPropiedadBarata :: Propiedad -> Bool
 esPropiedadBarata unaPropiedad = precio unaPropiedad < 15
 
 esAccionista :: Jugador -> Bool
-esAccionista unJugador = tacticaDeJuego unJugador == Accionista
+esAccionista Jugador {tacticaDeJuego = Accionista} = True
 
 esOferente :: Jugador -> Bool
-esOferente unJugador = tacticaDeJuego unJugador == OferenteSingular
+esOferente Jugador {tacticaDeJuego = OferenteSingular} = True
 
 
 
 --funciones
 pasarPorElBanco :: Accion
-pasarPorElBanco = (ganarDinero 40) . (asignarTactica CompradorCompulsivo)
+pasarPorElBanco = ganarDinero 40 . asignarTactica CompradorCompulsivo
 
 enojarse :: Accion
-enojarse = (ganarDinero 50) . (sumarAccion gritar)
+enojarse = ganarDinero 50 . sumarAccion gritar
 
 gritar :: Accion
 gritar unJugador = unJugador { nombre = (++ nombre unJugador) "AHHHH" }
 
 pagarAAccionistas :: Accion
-pagarAAccionistas unJugador 
+pagarAAccionistas unJugador
     | esAccionista unJugador = ganarDinero 200 unJugador
     | otherwise = perderDinero 100 unJugador
 
 hacerBerrinchePor :: Propiedad -> Accion
 hacerBerrinchePor unaPropiedad unJugador
     | puedePagarPropiedad unaPropiedad unJugador = unJugador
-    | otherwise = hacerBerrinchePor unaPropiedad (gritar . (ganarDinero 10) $ unJugador)
+    | otherwise = hacerBerrinchePor unaPropiedad . gritar . ganarDinero 10 $ unJugador
 
 
 --subastar
@@ -120,16 +114,16 @@ puedePagarPropiedad :: Propiedad -> Jugador -> Bool
 puedePagarPropiedad unaPropiedad unJugador  = dinero unJugador >= precio unaPropiedad
 
 pagarPropiedad :: Propiedad -> Accion
-pagarPropiedad unaPropiedad = (perderDinero (precio unaPropiedad)) . (comprarPropiedad unaPropiedad)
+pagarPropiedad unaPropiedad = perderDinero (precio unaPropiedad) . comprarPropiedad unaPropiedad
 
 
 
 --cobrarAlquileres
 cobrarAlquileres :: Accion
-cobrarAlquileres unJugador = ganarDinero (cuantoCobrar.propiedades $ unJugador) unJugador
+cobrarAlquileres unJugador = ganarDinero (cuantoCobrarDeAlquileres unJugador) unJugador
 
-cuantoCobrar :: [Propiedad] -> Int
-cuantoCobrar = sum.map alquilerSegunPropiedad
+cuantoCobrarDeAlquileres :: Jugador -> Int
+cuantoCobrarDeAlquileres unJugador = sum.map alquilerSegunPropiedad $ propiedades unJugador
 
 alquilerSegunPropiedad :: Propiedad -> Int
 alquilerSegunPropiedad unaPropiedad
@@ -142,12 +136,12 @@ ultimaRonda :: Jugador -> Accion
 ultimaRonda unJugador = foldr1 (.) (acciones unJugador)
 
 pasarPorUltimaRonda :: Accion
-pasarPorUltimaRonda unJugador = (ultimaRonda unJugador) unJugador
+pasarPorUltimaRonda unJugador = ultimaRonda unJugador unJugador
 
 dineroUltimaRonda :: Jugador -> Int
 dineroUltimaRonda = dinero . pasarPorUltimaRonda
 
 juegoFinal :: Jugador -> Jugador -> Jugador
-juegoFinal unJugador otroJugador 
-    | dineroUltimaRonda unJugador >= dineroUltimaRonda otroJugador = unJugador
-    | otherwise = otroJugador
+juegoFinal unJugador otroJugador
+    | dineroUltimaRonda unJugador >= dineroUltimaRonda otroJugador = pasarPorUltimaRonda unJugador
+    | otherwise = pasarPorUltimaRonda otroJugador
