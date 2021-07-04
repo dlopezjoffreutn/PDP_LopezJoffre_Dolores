@@ -8,7 +8,7 @@ someFunc = putStrLn "someFunc"
 --Funciones a ordenar y desarrollar. Todas las funciones deben estar tipadas.
 
 productoXL :: String -> String
-productoXL producto = producto ++ " XL" 
+productoXL producto = producto ++ " XL"
 
 productoCorriente :: String -> Bool
 productoCorriente producto = elem (head producto) "AEIOUaeiou"  
